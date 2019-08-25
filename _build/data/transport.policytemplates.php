@@ -1,7 +1,5 @@
 <?php
-
 $templates = array();
-
 $tmp = array(
   'ms2formUserPolicyTemplate' => array(
     'description' => 'A policy for ms2form users.',

@@ -1,41 +1,52 @@
 (function() {
     var ms2form = {
         config : {
-            actionUrl : Ms2formConfig.actionUrl
-            ,assetsUrl : Ms2formConfig.assetsUrl
-            ,vendorUrl : Ms2formConfig.vendorUrl
-            ,locale: Ms2formConfig.cultureKey
-            ,editor: Ms2formConfig.editor
-        }
-        ,selectors: {
-            form: '#ms2form'
-            , formKey: '#ms2formFormKey'
-            , mse2form: '#ms2formParentMse2form'
-            , content: '#ms2form #content'
-            , editor: '#ms2formEditor'
-            , editorId: 'ms2formEditor'
-            , editorContainer: '#formGroupContent'
-            , editorToolbar: '#ms2formEditorToolbar'
-            , tags: '#ms2formTags'
-            , categories: '#ms2formSections'
-            , tagsNew: '#ms2formTagsNew'
-            , file: '.ticket-file'
-            , fileLink: '.ticket-file-link'
-            , fileInsert: '.ms2-file-insert'
-            , fileDelete: '.ms2-file-delete'
-            , sisyphus: '#ms2form.create'
-            , sisyphusDisable: '#ms2form .disable-sisyphus, #ms2form :hidden'
-            , uploader: {
-                browse_button: 'ticket-files-select'
-                //, upload_button: document.getElementById('ticket-files-upload')
-                , container: 'ticket-files-container'
-                , filelist: 'ticket-files-list'
-                , progress: 'ticket-files-progress'
-                , progress_bar: 'ticket-files-progress-bar'
-                , progress_count: 'ticket-files-progress-count'
-                , progress_percent: 'ticket-files-progress-percent'
-                , drop_element: 'ticket-files-list'
-            }
+            actionUrl: Ms2formConfig.actionUrl,
+            assetsUrl: Ms2formConfig.assetsUrl,
+            vendorUrl: Ms2formConfig.vendorUrl,
+            locale: Ms2formConfig.cultureKey,
+            editor: Ms2formConfig.editor,
+        },
+        selectors: {
+            form: '#ms2form',
+            formKey: '#ms2formFormKey',
+            mse2form: '#ms2formParentMse2form',
+
+            content: '#ms2form #content',
+
+            editor: '#ms2formEditor',
+            editorId: 'ms2formEditor',
+            editorContainer: '#formGroupContent',
+            editorToolbar: '#ms2formEditorToolbar',
+
+            comboboxSingle: '.js-ms2f-combobox-single',
+            comboboxMultiple: '.js-ms2f-combobox-multiple',
+            comboboxAuto: '.js-ms2f-combobox-auto',
+
+            tags: '#ms2formTags',
+            tagsNew: '#ms2formTagsNew',
+
+            categories: '#ms2formSections',
+
+            file: '.ticket-file',
+            fileLink: '.ticket-file-link',
+            fileInsert: '.ms2-file-insert',
+            fileDelete: '.ms2-file-delete',
+
+            sisyphus: '#ms2form.create',
+            sisyphusDisable: '#ms2form .disable-sisyphus, #ms2form :hidden',
+
+            uploader: {
+                browse_button: 'ticket-files-select',
+                //upload_button: document.getElementById('ticket-files-upload'),
+                container: 'ticket-files-container',
+                filelist: 'ticket-files-list',
+                progress: 'ticket-files-progress',
+                progress_bar: 'ticket-files-progress-bar',
+                progress_count: 'ticket-files-progress-count',
+                progress_percent: 'ticket-files-progress-percent',
+                drop_element: 'ticket-files-list',
+            },
         }
         ,_loadConfig: function (actionUrl, callback){
             var request = new XMLHttpRequest();
@@ -222,7 +233,9 @@
                 e.stopPropagation();
             });
 
-            // init list catecories product
+            /**
+             * Init list categories product
+             */
             var categories;
             $.post(ms2form.config.actionUrl, {
                 action: 'product/getlist_category',
@@ -245,13 +258,15 @@
                 }
             }, 'json');
 
-            // init list tags products
+            /**
+             * Init list tags products
+             */
             var tags;
             $.post(ms2form.config.actionUrl, {
                 action: 'product/getlist_tag',
                 pid: pid,
                 form_key: form_key,
-        allowedTags: ( typeof Ms2formConfig.allowedTags == 'string' ) ? Ms2formConfig.allowedTags : ''
+                allowedTags: typeof(Ms2formConfig.allowedTags) === 'string' ? Ms2formConfig.allowedTags : '',
             }, function (response, textStatus, jqXHR) {
                 if (response.success) {
                     tags = response.data.all;
@@ -269,12 +284,63 @@
                     if (response.data.product) {
                         $(ms2form.selectors.tags).select2('val', response.data.product);
                     }
-
                 }
                 else {
                     ms2form.message.error(response.message);
                 }
             }, 'json');
+
+            /**
+             * Init combobox options of product
+             */
+            $([
+              ms2form.selectors['comboboxSingle'],
+              ms2form.selectors['comboboxMultiple'],
+              ms2form.selectors['comboboxAuto'],
+            ]).each(function (idx, el) {
+                var $el = $(el);
+                var optionKey = $el.prop('name');
+                var optionPlaceholder = $el.prop('placeholder');
+                if (!optionKey) {
+                    return;
+                }
+                var isMultiple = $el.is(ms2form.selectors['comboboxMultiple']);
+                var addNewValues = $el.is(ms2form.selectors['comboboxAuto']);
+
+                // init list tags products
+                $.post(ms2form.config['actionUrl'], {
+                    action: 'product/getlist_combobox',
+                    form_key: form_key,
+                    pid: pid,
+                    key: optionKey,
+                }, function (response) {
+                    if (response['success']) {
+                        var values = response.data['all'];
+                        var select2Config = {
+                            multiple: isMultiple || addNewValues,
+                            placeholder: optionPlaceholder || '',
+                            allowClear: true,
+                            separator: '||',
+                        };
+
+                        if (addNewValues) {
+                          select2Config.tags = values;
+                        } else {
+                          select2Config.data = values;
+                        }
+
+                        //
+                        $el.select2(select2Config);
+
+                        if (response.data['product']) {
+                            $el.select2('val', response.data['product']);
+                        }
+                    }
+                    else {
+                        ms2form.message.error(response.message);
+                    }
+                }, 'json');
+            });
 
             // Uploader
             ms2form.Uploader = new plupload.Uploader({

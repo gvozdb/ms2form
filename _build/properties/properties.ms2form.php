@@ -1,7 +1,5 @@
 <?php
-
 $properties = array();
-
 $tmp = array(
   'tplCreate' => array(
     'type' => 'textfield',

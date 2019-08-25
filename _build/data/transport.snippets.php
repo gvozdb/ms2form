@@ -1,7 +1,5 @@
 <?php
-
 $snippets = array();
-
 $tmp = array(
   'ms2form' => array(
     'file' => 'ms2form',

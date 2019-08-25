@@ -1,7 +1,5 @@
 <?php
-
 $chunks = array();
-
 $tmp = array(
   'tpl.ms2form.create' => array(
     'file' => 'create',

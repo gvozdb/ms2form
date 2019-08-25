@@ -1,6 +1,8 @@
 <?php
 /* @var array $scriptProperties */
 /* @var ms2form $ms2form */
+/* @var string $tplCreate */
+/* @var string $tplUpdate */
 
 if (!$modx->user->isAuthenticated()) {
   //return $modx->lexicon('ms2form_err_no_auth');
@@ -34,15 +36,19 @@ if (!empty($pid)) {
     if ($product->get('createdby') != $modx->user->id && !$modx->hasPermission('edit_document')) {
       return $modx->lexicon('ms2form_err_wrong_user');
     }
-    $productData = $product->toArray();
     $charset = $modx->getOption('modx_charset');
     $allowedFields = array_map('trim', explode(',', $scriptProperties['allowedFields']));
     $allowedFields = array_unique(array_merge($allowedFields, array('parent', 'pagetitle', 'content')));
 
+    $productArray = $product->toArray();
     $fields = $product->getAllFieldsNames();
+    $options = $ms2form->getProductOptions($product);
+
     foreach ($allowedFields as $field) {
       if (in_array($field, $fields)) {
-        $value = $productData[$field];
+        $value = $productArray[$field];
+      } elseif (isset($options[$field])) {
+        $value = $options[$field]['value'];
       } else {
         $tvId = (int)trim($field, 'tv');
         $value = $product->getTVValue($tvId);
@@ -54,6 +60,7 @@ if (!empty($pid)) {
       }
       $data[$field] = $value;
     }
+
     $data['id'] = $product->id;
     $data['published'] = $product->published;
     $data['alias'] = $product->alias;

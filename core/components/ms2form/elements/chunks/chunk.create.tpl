@@ -26,6 +26,29 @@
   [[+tags]]
 
   <div class="form-group">
+    <label>Text option</label>
+    <input type="text" class="form-control" name="textoption" value="">
+  </div>
+
+  <div class="form-group">
+    <label>Single list</label>
+    <br/>
+    <input type="hidden" class="form-control [ js-ms2f-combobox-single ]" name="singlelist">
+  </div>
+
+  <div class="form-group">
+    <label>Multi list</label>
+    <br/>
+    <input type="hidden" class="form-control [ js-ms2f-combobox-multiple ]" name="multilist">
+  </div>
+
+  <div class="form-group">
+    <label>Auto list</label>
+    <br/>
+    <input type="hidden" class="form-control [ js-ms2f-combobox-auto ]" name="autolist">
+  </div>
+
+  <div class="form-group">
     <label>Пример TV </label>
     <br/> указать в параметре allowedFields=`parent,pagetitle,content,published,template,hidemenu,tags,tv1`
     <br/>

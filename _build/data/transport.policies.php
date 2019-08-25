@@ -1,7 +1,5 @@
 <?php
-
 $policies = array();
-
 $tmp = array(
   'ms2formUserPolicy' => array(
     'description' => 'A policy for create and update minishop products categories and files.',

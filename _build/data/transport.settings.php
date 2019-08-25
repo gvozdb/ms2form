@@ -1,7 +1,5 @@
 <?php
-
 $settings = array();
-
 $tmp = array(
   'core_path' => array(
     'xtype' => 'textfield',
@@ -54,7 +52,6 @@ $tmp = array(
     'area' => 'ms2form.mail',
   ),
 );
-
 
 foreach ($tmp as $k => $v) {
   /* @var modSystemSetting $setting */

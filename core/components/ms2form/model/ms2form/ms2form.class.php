@@ -1,9 +1,4 @@
 <?php
-/**
- * The base class for ms2form.
- *
- * @package ms2form
- */
 class ms2form
 {
   /* @var modX $modx */
@@ -316,20 +311,31 @@ class ms2form
     $requiredFields = array_map('trim', explode(',', $this->config['requiredFields']));
     $requiredFields = array_unique(array_merge($requiredFields, array('parent', 'pagetitle')));
     $requiredFields = array_diff($requiredFields, array(''));
-    if(!empty($this->config['parentMse2form'])){
+    if (!empty($this->config['parentMse2form'])) {
       $allowedFields[] = $this->config['parentMse2form']['queryVar'];
       $requiredFields[] = $this->config['parentMse2form']['queryVar'];
     }
+    $options = $this->getProductOptions();
 
     $fields = array();
     foreach ($allowedFields as $field) {
       if (in_array($field, $allowedFields) && array_key_exists($field, $data)) {
         $value = $data[$field];
-        if(is_array($value)){
-          foreach($value as $key => $item){
+        if (isset($options[$field])) {
+          if (in_array($options[$field]['type'], [
+            'combo-multiple',
+            'combo-options',
+          ], true)) {
+            if (!is_array($value)) {
+              $value = array_diff(explode('||', $value), ['']);
+            }
+          }
+          $field = 'options-' . $field;
+        } elseif (is_array($value)) {
+          foreach ($value as $key => $item) {
             $value[$key] = $this->sanitizeString($item);
           }
-        }else if($field !== 'content'){
+        } elseif ($field !== 'content') {
           $value = $this->sanitizeString($value);
         }
         $fields[$field] = $value;
@@ -354,7 +360,7 @@ class ms2form
     $fields['source'] = $source;
 
     //filter content
-    if(!$this->config['disableHtmlpurifier']){
+    if (!$this->config['disableHtmlpurifier']) {
       require_once $this->config['corePath'] . '/vendor/autoload.php';
       $purifierConfig = HTMLPurifier_Config::createDefault();
       $purifier = new HTMLPurifier($purifierConfig);
@@ -367,10 +373,10 @@ class ms2form
       $fields['id'] = (integer)$data['pid'];
       $fields['context_key'] = $data['context_key'];
       $fields['alias'] = $data['alias'];
-      $response = $this->modx->runProcessor('mgr/product/update', $fields, array('processors_path' => MODX_CORE_PATH . 'components/minishop2/processors/'));
+      $response = $this->modx->runProcessor('resource/update', $fields);
       $flagNew = false;
     } else {
-      $response = $this->modx->runProcessor('mgr/product/create', $fields, array('processors_path' => MODX_CORE_PATH . 'components/minishop2/processors/'));
+      $response = $this->modx->runProcessor('resource/create', $fields);
       $flagNew = true;
     }
 
@@ -385,6 +391,7 @@ class ms2form
       foreach ($tmp as $v) {
         $errors[$v->field] = $v->message;
       }
+
       return $this->error($message, $errors);
     }
     $productId = $response->response['object']['id'];
@@ -424,7 +431,6 @@ class ms2form
       }
     }
 
-
     // updateProductImage
     /* @var msProduct $product */
     $product = $this->modx->getObject('msProduct', $productId);
@@ -433,16 +439,17 @@ class ms2form
     //redirect
     $successMessage = '';
     $successData = array();
-    if($data['redirectPublished'] == '0'){
+    if ($data['redirectPublished'] == '0') {
       $successMessage = 'ms2form_published';
-    }else if ($data['redirectPublished'] == 'new'){
+    } elseif ($data['redirectPublished'] == 'new') {
       if (empty($data['published'])) {
         $productId = $data['parent'];
       }
       $successData['redirect'] = $this->modx->makeUrl($productId, '', '', $this->config['redirectScheme']);
-    } else if ($data['redirectPublished']){
+    } elseif ($data['redirectPublished']) {
       $successData['redirect'] = $this->modx->makeUrl($data['redirectPublished'], '', '', $this->config['redirectScheme']);
     }
+
     return $this->success($successMessage, $successData);
   }
 
@@ -453,7 +460,7 @@ class ms2form
    *
    * @return array
    */
-  public function categoryCreate (array $data){
+  public function categoryCreate(array $data){
     $allowedFields = array_map('trim', explode(',', $this->config['allowedFields']));
     $allowedFields = array_unique(array_merge($allowedFields, array('parent', 'pagetitle', 'content')));
     $requiredFields = array('parent', 'pagetitle');
@@ -514,6 +521,57 @@ class ms2form
     return $this->success('', array('id'=> $categoryId));
   }
 
+  /**
+   * @param msProduct $product
+   *
+   * @return array $options
+   */
+  public function getProductOptions($product = null)
+  {
+    $rows = [];
+    if (empty($product)) {
+      /** @var msProductData $productData */
+      $productData = $this->modx->newObject('msProductData');
+      /** @var xPDOQuery $c */
+      $c = $productData->prepareOptionListCriteria();
+      $c->groupby('msOption.id');
+      $c->select(array(
+        $this->modx->getSelectColumns('msOption', 'msOption'),
+        $this->modx->getSelectColumns('msCategoryOption', 'msCategoryOption', '',
+          array('id', 'option_id', 'category_id'), true
+        ),
+        'Category.category AS category_name',
+      ));
+
+      /** @var msOption $option */
+      $options = $this->modx->getIterator('msOption', $c);
+      foreach ($options as $option) {
+        $field = $option->toArray();
+        $field['value'] = '';
+        $rows[$field['key']] = $field;
+      }
+    } else {
+      /** @var msProductData $productData */
+      $productData = $product->getOne('Data');
+      $options = $productData->getOptionFields();
+      $tmp = [];
+      foreach ($options as $v) {
+        if (!empty($v['key'])) {
+          $tmp[$v['key']] = $v;
+        }
+      }
+      $rows = $tmp;
+      unset($tmp);
+    }
+
+    return $rows;
+  }
+
+  /**
+   * @param string $ctx
+   *
+   * @return bool|object|null
+   */
   public function initializeMediaSource($ctx = '')
   {
     if (is_object($this->mediaSource) && $this->mediaSource instanceof modMediaSource) {
@@ -550,6 +608,27 @@ class ms2form
     return str_replace($arr1, $arr2, $string);
   }
 
+  /**
+   * @param $data
+   *
+   * @return array|string
+   */
+  public function getListCombobox($data)
+  {
+    /** @var modProcessorResponse $response */
+    $response = $this->modx->runProcessor('web/product/getlist_combobox', $data, array('processors_path' => dirname(dirname(dirname(__FILE__))) . '/processors/'));
+    if ($response->isError()) {
+      return $this->error($response->getMessage());
+    }
+    $list = $response->getObject();
+    return $this->success('', $list);
+  }
+
+  /**
+   * @param $data
+   *
+   * @return array|string
+   */
   public function getListTag($data)
   {
     /** @var modProcessorResponse $response */
@@ -561,6 +640,11 @@ class ms2form
     return $this->success('', $tags);
   }
 
+  /**
+   * @param $data
+   *
+   * @return array|string
+   */
   public function getListCategory($data)
   {
     $data['config'] = $this->config;
@@ -573,6 +657,13 @@ class ms2form
     return $this->success('', $tags);
   }
 
+  /**
+   * @param $uid
+   * @param $subject
+   * @param $body
+   *
+   * @return bool|string
+   */
   public function sendMail($uid, $subject, $body)
   {
     /* @var modPHPMailer $mail */
@@ -580,9 +671,9 @@ class ms2form
     $mail->setHTML(true);
     $mail->set(modMail::MAIL_SUBJECT, $subject);
     $mail->set(modMail::MAIL_BODY, $body);
-    $mail->set(modMail::MAIL_SENDER, $this->modx->getOption('ms2form.mail_from', null, $this->modx->getOption('emailsender'), true));
-    $mail->set(modMail::MAIL_FROM, $this->modx->getOption('ms2form.mail_from', null, $this->modx->getOption('emailsender'), true));
-    $mail->set(modMail::MAIL_FROM_NAME, $this->modx->getOption('ms2form.mail_from_name', null, $this->modx->getOption('site_name'), true));
+    $mail->set(modMail::MAIL_SENDER, $this->modx->getOption('ms2form_mail_from', null, $this->modx->getOption('emailsender'), true));
+    $mail->set(modMail::MAIL_FROM, $this->modx->getOption('ms2form_mail_from', null, $this->modx->getOption('emailsender'), true));
+    $mail->set(modMail::MAIL_FROM_NAME, $this->modx->getOption('ms2form_mail_from_name', null, $this->modx->getOption('site_name'), true));
 
     /* get user and profile by user id */
     if ($user = $this->modx->getObject('modUser', $uid)) {

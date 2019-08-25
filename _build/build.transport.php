@@ -244,6 +244,15 @@ if (defined('BUILD_PLUGIN_UPDATE')) {
 
 $vehicle = $builder->createVehicle($category, $attr);
 
+/** @var array $BUILD_RESOLVERS_BEFORE */
+foreach ($BUILD_RESOLVERS_BEFORE as $resolver) {
+  if ($vehicle->resolve('php', array('source' => $sources['resolvers'] . 'resolve.' . $resolver . '.php'))) {
+    $modx->log(modX::LOG_LEVEL_INFO, 'Added resolver "' . $resolver . '" to category.');
+  } else {
+    $modx->log(modX::LOG_LEVEL_INFO, 'Could not add resolver "' . $resolver . '" to category.');
+  }
+}
+
 /* now pack in resolvers */
 $vehicle->resolve('file', array(
   'source' => $sources['source_assets'],
@@ -254,11 +263,11 @@ $vehicle->resolve('file', array(
   'target' => "return MODX_CORE_PATH . 'components/';",
 ));
 
-foreach ($BUILD_RESOLVERS as $resolver) {
+/** @var array $BUILD_RESOLVERS_AFTER */
+foreach ($BUILD_RESOLVERS_AFTER as $resolver) {
   if ($vehicle->resolve('php', array('source' => $sources['resolvers'] . 'resolve.' . $resolver . '.php'))) {
     $modx->log(modX::LOG_LEVEL_INFO, 'Added resolver "' . $resolver . '" to category.');
-  }
-  else {
+  } else {
     $modx->log(modX::LOG_LEVEL_INFO, 'Could not add resolver "' . $resolver . '" to category.');
   }
 }

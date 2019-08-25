@@ -1,15 +1,6 @@
 <?php
-
 $menus = array();
-
-$tmp = array(
-/*  'ms2form' => array(
-    'description' => 'ms2form_menu_desc',
-    'action' => array(
-      'controller' => 'index',
-    ),
-  ),*/
-);
+$tmp = array();
 
 $i = 0;
 foreach ($tmp as $k => $v) {

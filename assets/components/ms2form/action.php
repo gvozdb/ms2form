@@ -48,6 +48,7 @@ switch ($action) {
   case 'gallery/delete': $response = $ms2form->fileDelete($_POST['id']); break;
   case 'gallery/sort': $response = $ms2form->fileSort($_POST['rank']);break;
 
+  case 'product/getlist_combobox': $response = $ms2form->getListCombobox($_POST); break;
   case 'product/getlist_tag': $response = $ms2form->getListTag($_POST); break;
   case 'product/getlist_category': $response = $ms2form->getListCategory($_POST); break;
   case 'product/update':

@@ -1,17 +1,6 @@
 <?php
-
 $plugins = array();
-
-$tmp = array(/*
-  'ms2form' => array(
-    'file' => 'ms2form',
-    'description' => '',
-    'events' => array(
-      'OnManagerPageInit' => array()
-    )
-  )
-  */
-);
+$tmp = array();
 
 foreach ($tmp as $k => $v) {
   /* @avr modplugin $plugin */
