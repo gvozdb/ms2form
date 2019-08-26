@@ -39,11 +39,13 @@ class ms2FormProductGetListComboboxProcessor  extends modObjectProcessor
    */
   public function process()
   {
-    $output = [];
+    $output = [
+      'all' => [],
+    ];
 
     //
     if (!$option = $this->modx->getObject('msOption', ['key' => $this->key])) {
-      return $this->failure('');
+      return $this->success('', $output);
     }
 
     //

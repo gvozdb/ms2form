@@ -293,11 +293,7 @@
             /**
              * Init combobox options of product
              */
-            $([
-              ms2form.selectors['comboboxSingle'],
-              ms2form.selectors['comboboxMultiple'],
-              ms2form.selectors['comboboxAuto'],
-            ]).each(function (idx, el) {
+            var comboboxOptionHandler = function (idx, el) {
                 var $el = $(el);
                 var optionKey = $el.prop('name');
                 var optionPlaceholder = $el.prop('placeholder');
@@ -314,6 +310,9 @@
                     pid: pid,
                     key: optionKey,
                 }, function (response) {
+                    console.log('$el', $el);
+                    console.log('response', response);
+
                     if (response['success']) {
                         var values = response.data['all'];
                         var select2Config = {
@@ -324,9 +323,9 @@
                         };
 
                         if (addNewValues) {
-                          select2Config.tags = values;
+                            select2Config.tags = values;
                         } else {
-                          select2Config.data = values;
+                            select2Config.data = values;
                         }
 
                         //
@@ -335,12 +334,14 @@
                         if (response.data['product']) {
                             $el.select2('val', response.data['product']);
                         }
-                    }
-                    else {
+                    } else {
                         ms2form.message.error(response.message);
                     }
                 }, 'json');
-            });
+            };
+            $(ms2form.selectors['comboboxSingle']).each(comboboxOptionHandler);
+            $(ms2form.selectors['comboboxMultiple']).each(comboboxOptionHandler);
+            $(ms2form.selectors['comboboxAuto']).each(comboboxOptionHandler);
 
             // Uploader
             ms2form.Uploader = new plupload.Uploader({
