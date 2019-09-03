@@ -40,6 +40,7 @@
     <label>Multi list</label>
     <br/>
     <input type="hidden" class="form-control [ js-ms2f-combobox-multiple ]" name="multilist">
+    <label><input type="checkbox" class="[ js-ms2f-combobox-select-all ]" data-name="multilist"> Выбрать всё</label>
   </div>
 
   <div class="form-group">

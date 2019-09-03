@@ -22,6 +22,7 @@
             comboboxSingle: '.js-ms2f-combobox-single',
             comboboxMultiple: '.js-ms2f-combobox-multiple',
             comboboxAuto: '.js-ms2f-combobox-auto',
+            comboboxSelectAll: '.js-ms2f-combobox-select-all',
 
             tags: '#ms2formTags',
             tagsNew: '#ms2formTagsNew',
@@ -310,8 +311,8 @@
                     pid: pid,
                     key: optionKey,
                 }, function (response) {
-                    console.log('$el', $el);
-                    console.log('response', response);
+                    // console.log('$el', $el);
+                    // console.log('response', response);
 
                     if (response['success']) {
                         var values = response.data['all'];
@@ -326,6 +327,10 @@
                             select2Config.tags = values;
                         } else {
                             select2Config.data = values;
+
+                            if (isMultiple) {
+                                window['ms2f-combobox-' + optionKey + ''] = values;
+                            }
                         }
 
                         //
@@ -343,7 +348,35 @@
             $(ms2form.selectors['comboboxMultiple']).each(comboboxOptionHandler);
             $(ms2form.selectors['comboboxAuto']).each(comboboxOptionHandler);
 
-            // Uploader
+            /**
+             * Init select all in combobox
+             */
+            $(document).on('change', ms2form.selectors['comboboxSelectAll'], function () {
+                var $checkbox = $(this);
+                var optionKey = $checkbox.data('name');
+                if (!optionKey) {
+                    return;
+                }
+
+                var $option = $(document).find('input[type="hidden"][name="' + optionKey + '"]');
+                if (!$option.length) {
+                    return;
+                }
+
+                var values = typeof(window['ms2f-combobox-' + optionKey]) !== 'undefined'
+                    ? window['ms2f-combobox-' + optionKey] : undefined;
+                if (values) {
+                    if ($checkbox.is(':checked')) {
+                        $option.select2('data', values);
+                    } else {
+                        $option.select2('val', '');
+                    }
+                }
+            });
+
+            /**
+             * Uploader
+             */
             ms2form.Uploader = new plupload.Uploader({
                 runtimes: 'html5,flash,silverlight,html4',
                 browse_button: ms2form.selectors.uploader.browse_button,

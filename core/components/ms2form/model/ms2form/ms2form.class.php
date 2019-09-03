@@ -348,6 +348,9 @@ class ms2form
 
     $errors = array();
     foreach ($requiredFields as $v) {
+      if (isset($options[$v])) {
+        $v = 'options-' . $v;
+      }
       if (empty($fields[$v])) {
         $errors[$v] = $this->modx->lexicon('field_required');
       }
