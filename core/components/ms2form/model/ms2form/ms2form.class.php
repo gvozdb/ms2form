@@ -298,12 +298,15 @@ class ms2form
    * Create Product through processor and redirect
    *
    * @param array $data section, pagetitle, text, etc
+   * @param array $properties
    *
    * @return array
    */
-  public function productSave(array $data)
+  public function productSave(array $data, array $properties)
   {
     $source = $this->config['source'];
+
+    // $this->modx->log(1, 'productSave $data ' .  print_r($data, 1));
 
     $allowedFields = array_map('trim', explode(',', $this->config['allowedFields']));
     $allowedFields = array_unique(array_merge($allowedFields, array('parent', 'pagetitle', 'content')));
@@ -408,7 +411,13 @@ class ms2form
     // move msProductFiles
     if (empty($data['pid']) and $data['files']) {
       /** @var modProcessorResponse $responseMove */
-      $responseMove = $this->modx->runProcessor('web/gallery/move_multiple', array('productId' => $productId, 'files' => $data['files'], 'source' => $source), array('processors_path' => dirname(dirname(dirname(__FILE__))) . '/processors/'));
+      $responseMove = $this->modx->runProcessor('web/gallery/move_multiple', array(
+        'productId' => $productId,
+        'files' => $data['files'],
+        'source' => $source
+      ), array(
+        'processors_path' => dirname(dirname(dirname(__FILE__))) . '/processors/'
+      ));
       if ($responseMove->isError()) {
         return $this->error($responseMove->getMessage(), $responseMove->getFieldErrors());
       }

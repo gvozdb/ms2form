@@ -44,6 +44,7 @@ if (!empty($pid)) {
     $fields = $product->getAllFieldsNames();
     $options = $ms2form->getProductOptions($product);
 
+    //
     foreach ($allowedFields as $field) {
       if (in_array($field, $fields)) {
         $value = $productArray[$field];
@@ -61,6 +62,7 @@ if (!empty($pid)) {
       $data[$field] = $value;
     }
 
+    //
     $data['id'] = $product->id;
     $data['published'] = $product->published;
     $data['alias'] = $product->alias;
@@ -72,7 +74,49 @@ if (!empty($pid)) {
   }
 } else {
   $tplWrapper = $tplCreate;
+  $options = $ms2form->getProductOptions();
 }
+
+//
+foreach ($options as &$option) {
+  //
+  $values = [];
+  $option['values'] = @$option['properties']['values'] ?: [];
+
+  // $option['values'] = [];
+  // $response = $ms2form->getListCombobox([
+  //   'pid' => $pid,
+  //   'key' => $option['key'],
+  // ]);
+  // $response = !is_array($response) ? $modx->fromJSON($response) : $response;
+  // if ($response['success'] === true && @$response['data']['exists'] === true && !empty($response['data']['all'])) {
+  //   $option['values'] = $response['data']['all'];
+  // }
+  if (is_array($option['values'])) {
+    foreach ($option['values'] as $v) {
+      $values[$v] = $v;
+    }
+    $option['values'] = $values;
+  }
+
+  //
+  $values = [];
+  if (is_array($option['value'])) {
+    foreach ($option['value'] as $v) {
+      $values[$v['value']] = $v['value'];
+    }
+    $option['value'] = $values;
+  }
+
+  //
+  if (is_array($option['value']) && is_array($option['values'])) {
+    $option['selectAll'] = $option['value'] == $option['values'];
+  }
+}
+$data['options'] = $options;
+unset($response, $option, $values);
+
+
 // todo-me Get available sections for msProduct create
 
 
@@ -116,31 +160,48 @@ if (!empty($allowFiles)) {
   $q = $modx->newQuery('msProductFile');
   if (empty($pid)) {
     $q->where(array(
-      'product_id' => 0
-      ,'parent' => 0
-      //,'createdby' => $modx->user->id
+      'product_id' => 0,
+      'parent' => 0,
+      'createdby' => $modx->user->id,
     ));
   }else{
     $q->where(array(
-      'product_id' => $pid
-    , 'parent' => 0
-    //, 'createdby' => $modx->user->id
+      'product_id' => $pid,
+      'parent' => 0,
+      // 'createdby' => $modx->user->id
     ));
   }
   $q->sortby('rank', 'ASC');
-  $collection = $modx->getIterator('msProductFile', $q);
+  $fileObjects = $modx->getIterator('msProductFile', $q);
   $files = '';
-  /** @var msProductFile $item */
-  foreach ($collection as $item) {
-      $item = $item->toArray();
-      $item['size'] = round($item['size'] / 1024, 2);
-      $tmp = explode('.', $item['file']);
-      $extension = strtolower(end($tmp));
+  /** @var msProductFile $fileObject */
+  foreach ($fileObjects as $fileObject) {
+    $item = $fileObject->toArray();
+    $item['size'] = round($item['size'] / 1024, 2);
+    $tmp = explode('.', $item['file']);
+    $extension = strtolower(end($tmp));
+
+    $item['thumb'] = '';
+    if (empty($ms2_product_thumbnail_size)) {
+      $c = $modx->newQuery('msProductFile', [
+        'product_id' => $item['product_id'],
+        'parent' => $item['id'],
+        'type' => 'image',
+      ])->select('url')->limit(1)->sortby('id', 'ASC');
+      if ($c->prepare()->execute()) {
+        $item['thumb'] = $c->stmt->fetch(PDO::FETCH_COLUMN) ?: '';
+      }
+      unset($c, $tmp);
+    } else {
       $item['thumb'] = '/'.$sourceProperties['baseUrl'].$item['path']. $ms2_product_thumbnail_size.'/'. str_replace('.'.$extension, '.'.strtolower($sourceProperties['thumbnailType']), $item['file']);
-      $tpl = $item['type'] == 'image'
-        ? $tplImage
-        : $tplFile;
-      $files .= $ms2form->getChunk($tpl, $item);
+    }
+
+    $tpl = $item['type'] == 'image'
+      ? $tplImage
+      : $tplFile;
+    $files .= $ms2form->getChunk($tpl, $item);
+
+    unset($fileObject, $item);
   }
   $data['files'] = $ms2form->getChunk($tplFiles, array(
     'files' => $files,

@@ -24,6 +24,8 @@
             comboboxAuto: '.js-ms2f-combobox-auto',
             comboboxSelectAll: '.js-ms2f-combobox-select-all',
 
+            checkboxesSelectAll: '.js-ms2f-checkboxes-select-all',
+
             tags: '#ms2formTags',
             tagsNew: '#ms2formTagsNew',
 
@@ -357,7 +359,6 @@
                 if (!optionKey) {
                     return;
                 }
-
                 var $option = $(document).find('input[type="hidden"][name="' + optionKey + '"]');
                 if (!$option.length) {
                     return;
@@ -373,6 +374,46 @@
                     }
                 }
             });
+
+            /**
+             * Init select all in checkboxes
+             */
+            var $checkboxesSelectAll = $(ms2form.selectors['checkboxesSelectAll']);
+            if ($checkboxesSelectAll.length) {
+              $(document).on('change', ms2form.selectors['checkboxesSelectAll'], function () {
+                var $checkbox = $(this);
+                var optionKey = $checkbox.data('name');
+                if (!optionKey) {
+                  return;
+                }
+                var $checkboxes = $(document).find('input[type="checkbox"][name="' + optionKey + '[]"]');
+                if (!$checkboxes.length) {
+                  return;
+                }
+
+                var checked = $checkboxes.not(':checked').length > 0;
+                $checkboxes
+                  .prop('checked', checked)
+                  .attr('checked', checked)
+                  .change();
+              });
+
+              //
+              $checkboxesSelectAll.each(function (idx, el) {
+                var $checkbox = $(el);
+                var optionKey = $checkbox.data('name');
+                if (!optionKey) {
+                  return;
+                }
+                $(document).on('change', 'input[type="checkbox"][name="' + optionKey + '[]"]', function () {
+                  var $checkboxes = $(document).find('input[type="checkbox"][name="' + optionKey + '[]"]');
+                  var checked = $checkboxes.not(':checked').length === 0;
+                  $checkbox
+                    .prop('checked', checked)
+                    .attr('checked', checked);
+                });
+              });
+            }
 
             /**
              * Uploader
@@ -474,25 +515,25 @@
 
             //Sort files
             $('#' + ms2form.selectors.uploader.filelist).sortable({
-                    items: ms2form.selectors.file,
-                    update: function( event, ui ) {
-                            var rank = {};
-                            $('#' + ms2form.selectors.uploader.filelist).find(ms2form.selectors.file).each(function(i){
-                                    rank[i] = $(this).data('id');
-                            });
+                items: ms2form.selectors.file,
+                update: function( event, ui ) {
+                    var rank = {};
+                    $('#' + ms2form.selectors.uploader.filelist).find(ms2form.selectors.file).each(function(i){
+                      rank[i] = $(this).data('id');
+                    });
 
-                            var data = {
-                                    action: 'gallery/sort'
-                                    , rank: rank
-                                    , form_key: ms2form.config.formKey
-                            };
+                    var data = {
+                      action: 'gallery/sort',
+                      rank: rank,
+                      form_key: ms2form.config.formKey
+                    };
 
-                            $.post(ms2form.config.actionUrl, data, function(response) {
-                                    if (!response.success) {
-                                            ms2form.message.error(response.message);
-                                    }
-                            }, 'json');
-                    }
+                    $.post(ms2form.config.actionUrl, data, function(response) {
+                      if (!response.success) {
+                        ms2form.message.error(response.message);
+                      }
+                    }, 'json');
+                }
             });
 
             // Forms listeners
@@ -640,7 +681,10 @@
                     } else if (response.data.redirect) {
                         document.location.href = response.data.redirect;
                     }
-                    $(ms2form.form).resetForm();
+                    var $form = $(ms2form.form);
+                    if ($form.data('reset') === 'true') {
+                      $form.resetForm();
+                    }
                     $(ms2form.button).removeAttr('disabled');
                 } else {
                     ms2form.product._error(response)

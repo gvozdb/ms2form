@@ -1,4 +1,4 @@
-<form class="well" method="post" action="" id="ms2form" role="form">
+<form class="well" method="post" action="" id="ms2form" role="form" data-reset="true">
   <input type="hidden" id="ms2formFormKey" name="form_key" value="[[+formKey]]">
   <input type="hidden" name="pid" value="[[+id]]">
   <input type="hidden" name="parent" value="[[+parent]]">
@@ -49,6 +49,40 @@
     <br/>
     <input type="hidden" class="form-control [ js-ms2f-combobox-auto ]" name="autolist">
   </div>
+
+  {if isset($options['checkboxes1']) && $options['checkboxes1']['type'] === 'combo-multiple'}
+    <div class="form-group">
+      <label>Checkboxes 1</label>
+      <br/>
+      <input type="hidden" name="checkboxes1" value="">
+      <div><label><input type="checkbox" class="[ js-ms2f-checkboxes-select-all ]" data-name="checkboxes1"
+                      {$options['checkboxes1']['selectAll'] ? 'checked' : ''}> Выбрать всё</label></div>
+      <div>
+        {foreach $options['checkboxes1']['values'] as $v}
+          {var $checked = isset($options['checkboxes1']['value'][$v])}
+          <label><input type="checkbox" name="checkboxes1[]" value="{$v}" {$checked ? 'checked' : ''}> {$v}</label>&nbsp;
+          {unset $checked}
+        {/foreach}
+      </div>
+    </div>
+  {/if}
+
+  {if isset($options['checkboxes2']) && $options['checkboxes2']['type'] === 'combo-multiple'}
+    <div class="form-group">
+      <label>Checkboxes 2</label>
+      <br/>
+      <input type="hidden" name="checkboxes2" value="">
+      <div><label><input type="checkbox" class="[ js-ms2f-checkboxes-select-all ]" data-name="checkboxes2"
+                      {$options['checkboxes2']['selectAll'] ? 'checked' : ''}> Выбрать всё</label></div>
+      <div>
+        {foreach $options['checkboxes2']['values'] as $v}
+          {var $checked = isset($options['checkboxes2']['value'][$v])}
+          <label><input type="checkbox" name="checkboxes2[]" value="{$v}" {$checked ? 'checked' : ''}> {$v}</label>&nbsp;
+          {unset $checked}
+        {/foreach}
+      </div>
+    </div>
+  {/if}
 
   <div class="form-group">
     <label>Пример TV </label>
