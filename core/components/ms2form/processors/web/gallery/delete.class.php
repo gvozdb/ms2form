@@ -54,7 +54,14 @@ class ms2FormProductFileDeleteProcessor extends modObjectProcessor {
       $result = $this->modx->exec("DELETE FROM {$this->modx->getTableName('msProductFile')} WHERE `id` = {$id} OR `parent` = {$id};");
 
     }else{
-      $result = $file->remove();
+      if ($result = $file->remove()) {
+        if ($product = $file->getOne('Product')) {
+          if ($product->get('id') > 0) {
+            $product->set('editedon', time());
+            $product->save();
+          }
+        }
+      }
     }
 
     if(!$result){

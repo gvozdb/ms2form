@@ -105,7 +105,12 @@ class ms2FormProductFileUploadProcessor extends msProductFileUploadProcessor {
     if ($file) {
       $url = $this->mediaSource->getObjectUrl($product_file->get('path') . $product_file->get('file'));
       $product_file->set('url', $url);
-      $product_file->save();
+      if ($product_file->save()) {
+        if ($this->product->get('id') > 0) {
+          $this->product->set('editedon', time());
+          $this->product->save();
+        }
+      }
       $generate = $product_file->generateThumbnails($this->mediaSource);
       if ($generate !== true) {
         $this->modx->log(modX::LOG_LEVEL_ERROR, 'Could not generate thumbnails for image with id = ' . $product_file->get('id') . '. ' . $generate);
